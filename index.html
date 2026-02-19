@@ -1,1 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 LED Control</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f4f4f9; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px; color: white; transition: 0.3s; }
+        .on { background-color: #4CAF50; }
+        .off { background-color: #f44336; }
+        .status { margin-top: 1rem; font-weight: bold; }
+    </style>
+</head>
+<body>
 
+    <div class="card">
+        <h2>ESP32 Control Hub</h2>
+        <button id="ledBtn" class="off">Loading...</button>
+        <p class="status">Current Status: <span id="statText">---</span></p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // TODO: Replace with your project's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const ledRef = ref(db, 'ledStatus');
+
+        const btn = document.getElementById('ledBtn');
+        const statText = document.getElementById('statText');
+        let currentStatus = 0;
+
+        // Listen for changes in the database (Syncs UI with ESP32)
+        onValue(ledRef, (snapshot) => {
+            currentStatus = snapshot.val();
+            if (currentStatus === 1) {
+                btn.innerText = "TURN OFF";
+                btn.className = "on";
+                statText.innerText = "ON";
+            } else {
+                btn.innerText = "TURN ON";
+                btn.className = "off";
+                statText.innerText = "OFF";
+            }
+        });
+
+        // Toggle LED on click
+        btn.addEventListener('click', () => {
+            const nextStatus = currentStatus === 1 ? 0 : 1;
+            set(ledRef, nextStatus);
+        });
+    </script>
+</body>
+</html>
